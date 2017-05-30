@@ -1,15 +1,16 @@
 # imports
 import tensorflow as tf
+import matplotlib.pyplot as plt
 import csv
 from random import shuffle
 
 # variables
 n_classes = 42
-n_hidden_1 = 256
-n_hidden_2 = 256
+n_hidden_1 = 64
+n_hidden_2 = 64
 n_input = 177
 learning_rate = 0.001
-training_epochs = 102400
+training_epochs = 10000
 batch_size = 250
 display_step = 1
 display_accuracy_step = 100
@@ -20,7 +21,7 @@ x = tf.placeholder("float", [None, n_input])
 y = tf.placeholder("float", [None, n_classes]) 
 
 # read data from csv
-def read_wifidata(filename, train_size = 0.5, validation_size = 0.3, test_size = 0.2):
+def read_wifidata(filename, train_size = 0.5, validation_size = 0.2, test_size = 0.3):
     # baca isi complete.csv, jadikan list
     data = list()
     # kelompokkan berdasarkan kode ruangan
@@ -117,6 +118,11 @@ optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 # initialize variables
 init = tf.global_variables_initializer()
 
+epoch_cost_plot = []
+cost_plot = []
+epoch_validation_plot = []
+validation_plot = []
+
 # jalankan graph
 with tf.Session() as sess:
     sess.run(init)
@@ -134,6 +140,9 @@ with tf.Session() as sess:
             _, c = sess.run([optimizer, cost], feed_dict={x: batch_x, y:batch_y})
             avg_cost += c / total_batch
             
+        epoch_cost_plot.append(epoch+1)
+        cost_plot.append(avg_cost)
+            
         if (epoch % display_step == 0):
             print("Epoch:", (epoch+1), " cost= {:.9f}".format(avg_cost))
             
@@ -141,8 +150,12 @@ with tf.Session() as sess:
             current_correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
             # Calculate accuracy
             current_accuracy = tf.reduce_mean(tf.cast(current_correct_prediction, "float"))
-            print("Validation Accuracy:", current_accuracy.eval({x: validation_data, y: validation_target}))
-        
+            current_validation_accuracy = current_accuracy.eval({x: validation_data, y: validation_target})
+            print("Validation Accuracy:", current_validation_accuracy)
+            
+            epoch_validation_plot.append(epoch)
+            validation_plot.append(current_validation_accuracy * 100)
+            
         if (avg_cost < minimum_cost):
             print("Minimum cost achieved!")
             break
@@ -154,3 +167,17 @@ with tf.Session() as sess:
     # Calculate accuracy
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
     print("Accuracy:", accuracy.eval({x: test_data, y: test_target}))
+    
+    # Plot results
+    plt.figure(1)
+    plt.subplot(211)
+    plt.plot(epoch_cost_plot, cost_plot)
+    plt.xlabel('Epoch')
+    plt.ylabel('Cost/Error')
+    plt.axis([0, epoch_cost_plot[-1], 0, 1])
+    
+    plt.subplot(212)
+    plt.plot(epoch_validation_plot, validation_plot)
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy (%)')
+    plt.show()
