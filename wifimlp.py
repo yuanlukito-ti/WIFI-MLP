@@ -2,23 +2,8 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import csv
+import time
 from random import shuffle
-
-# variables
-n_classes = 42
-n_hidden_1 = 64
-n_hidden_2 = 64
-n_input = 177
-learning_rate = 0.001
-training_epochs = 10000
-batch_size = 250
-display_step = 1
-display_accuracy_step = 100
-minimum_cost = 0.025
-
-#tensorflow graph input
-x = tf.placeholder("float", [None, n_input])
-y = tf.placeholder("float", [None, n_classes]) 
 
 # read data from csv
 def read_wifidata(filename, train_size = 0.5, validation_size = 0.2, test_size = 0.3):
@@ -85,6 +70,24 @@ def multilayer_perceptron(x, weights, biases):
     # output layer dengan fungsi aktivasi linear
     out_layer = tf.matmul(layer_2, weights['out']) + biases['out']
     return out_layer
+
+timestamp1 = time.time()
+
+# variables
+n_classes = 42
+n_hidden_1 = 224
+n_hidden_2 = 224
+n_input = 177
+learning_rate = 0.001
+training_epochs = 10000
+batch_size = 250
+display_step = 1
+display_accuracy_step = 100
+minimum_cost = 0.01
+
+#tensorflow graph input
+x = tf.placeholder("float", [None, n_input])
+y = tf.placeholder("float", [None, n_classes]) 
 
 # 0. Read dataset (Dataset.csv)
 result = read_wifidata('Dataset.csv')
@@ -167,6 +170,9 @@ with tf.Session() as sess:
     # Calculate accuracy
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
     print("Accuracy:", accuracy.eval({x: test_data, y: test_target}))
+    
+    timestamp2 = time.time()
+    print("Training time: %.2f seconds" % (timestamp2 - timestamp1))
     
     # Plot results
     plt.figure(1)
